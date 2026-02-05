@@ -3,14 +3,15 @@ import express from "express";
 import connectionPool from "./utils/db.mjs";
 import corsMiddleware from "./middlewares/corsMiddleware.mjs";
 import postsRouter from './routes/postRouter.mjs';
+import cors from "cors";
 
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(express.json())
-app.use(corsMiddleware);
-  
+app.use(cors());
+
 
 app.get("/", (req, res) => {
     res.send("Hello TechUp!");
@@ -42,6 +43,11 @@ app.get("/profiles", (req, res) => {
     });
 });
 
+
 app.listen(PORT, () => {
-    console.log(`Server is running at ${PORT}`);
+    console.log(`Server running on ${PORT}`);
 });
+
+
+
+
