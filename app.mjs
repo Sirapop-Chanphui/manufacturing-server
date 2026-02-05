@@ -17,6 +17,10 @@ app.get("/", (req, res) => {
     res.send("Hello TechUp!");
 });
 
+app.get("/health", (req, res) => {
+    res.json({ message: "OK" });
+  });
+  
 app.use("/posts", postsRouter);
 
 app.get("/db-test", async (req, res) => {
