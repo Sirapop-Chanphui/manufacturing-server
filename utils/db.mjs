@@ -2,7 +2,8 @@ import * as pg from "pg";
 const { Pool } = pg.default;
 
 const connectionPool = new Pool({
-  connectionString: "postgresql://postgres:073536@localhost:5432/lms-assignment",
+  connectionString: process.env.CONNECTION_STRING,
 });
 
 export default connectionPool;
+
