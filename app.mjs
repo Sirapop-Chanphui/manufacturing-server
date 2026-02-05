@@ -19,8 +19,8 @@ app.get("/", (req, res) => {
 
 app.get("/health", (req, res) => {
     res.json({ message: "OK" });
-  });
-  
+});
+
 app.use("/posts", postsRouter);
 
 app.get("/db-test", async (req, res) => {
@@ -48,9 +48,8 @@ app.get("/profiles", (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-    console.log(`Server running on ${PORT}`);
-});
+
+if (process.env.VERCEL !== "1") { app.listen(PORT, () => { console.log(`✅ Server running on http://localhost:${PORT}`); }); }
 
 
 
