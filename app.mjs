@@ -3,14 +3,12 @@ import express from "express";
 import connectionPool from "./utils/db.mjs";
 import corsMiddleware from "./middlewares/corsMiddleware.mjs";
 import postsRouter from './routes/postRouter.mjs';
-import cors from "cors";
-
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(express.json())
-app.use(cors());
+app.use(corsMiddleware);
 
 
 app.get("/", (req, res) => {
