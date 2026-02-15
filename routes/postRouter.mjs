@@ -1,23 +1,24 @@
 import { Router } from "express";
 import PostsValidation from "../middlewares/postsValidation.mjs";
 import PostController from "../controllers/postController.mjs";
+import protectMiddleware from "../middlewares/protectMiddleware.mjs";
 
 const postsRouter = Router();
 
-// Create post
-postsRouter.post("/", PostsValidation.validatePost, PostController.createPost);
+// Create post (protected)
+postsRouter.post("/", protectMiddleware, PostsValidation.validatePost, PostController.createPost);
 
-// Get all posts (with pagination)
+// Get all posts (public, with pagination)
 postsRouter.get("/", PostController.getAllPosts);
 
-// Get post by id
+// Get post by id (public)
 postsRouter.get("/:postId", PostController.getPostById);
 
-// Update post by id
-postsRouter.put("/:postId", PostsValidation.validatePost, PostController.updatePost);
+// Update post by id (protected)
+postsRouter.put("/:postId", protectMiddleware, PostsValidation.validatePost, PostController.updatePost
+);
 
-// Delete post by id
-postsRouter.delete("/:postId", PostController.deletePost);
-
+// Delete post by id (protected)
+postsRouter.delete("/:postId", protectMiddleware, PostController.deletePost);
 
 export default postsRouter;

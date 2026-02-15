@@ -96,7 +96,7 @@ const PostRepository = {
             `,
             [title, image, category_id, description, content, status_id, postId]
         );
-        return result.rows[0];
+        return result.rows[0] || null;
     },
 
     delete: async (postId) => {
@@ -104,16 +104,9 @@ const PostRepository = {
             "DELETE FROM posts WHERE id = $1 RETURNING *",
             [postId]
         );
-        return result.rows[0];
+        return result.rows[0] || null;
     },
 
-    checkExists: async (postId) => {
-        const result = await connectionPool.query(
-            "SELECT id FROM posts WHERE id = $1",
-            [postId]
-        );
-        return result.rows.length > 0;
-    }
 }
 
 export default PostRepository

@@ -14,20 +14,31 @@ const PostService = {
     },
 
     updatePost: async (postId, postData) => {
-        const exists = await PostRepository.checkExists(postId);
-        if (!exists) {
-            return null;
+        const updatedPost = await PostRepository.update(postId, postData);
+    
+        if (!updatedPost) {
+            const err = new Error("Post not found");
+            err.statusCode = 404;
+            throw err;
         }
-        return await PostRepository.update(postId, postData);
-    },
-
-    deletePost: async (postId) => {
-        const exists = await PostRepository.checkExists(postId);
-        if (!exists) {
-            return null;
-        }
-        return await PostRepository.delete(postId);
+    
+        return updatedPost;
     }
+    ,
+
+    deletePost: async (req, res, next) => {
+        try {
+            await PostService.deletePost(req.params.postId);
+    
+            return res.status(200).json({
+                message: "Deleted post successfully",
+            });
+        } catch (error) {
+            return next(error);
+        }
+    }
+    
+    
 }
 
 export default PostService

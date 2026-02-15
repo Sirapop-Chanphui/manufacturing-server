@@ -1,12 +1,13 @@
 import { z } from "zod";
+import formatZodError from "../utils/formatZodError.mjs";
 
 const postSchema = z.object({
   title: z.string().min(1),
   image: z.string().url().min(1),
-  category_id: z.number().int(),
+  category_id: z.coerce.number().int(),
   description: z.string().min(1),
   content: z.string().min(1),
-  status_id: z.number().int(),
+  status_id: z.coerce.number().int(),
 });
 
 const PostsValidation = {
@@ -14,14 +15,14 @@ const PostsValidation = {
     const result = postSchema.safeParse(req.body);
 
     if (!result.success) {
-      return res.status(400).json({
-        message: "Validation error",
-        errors: result.error.flatten().fieldErrors,
-      });
+      const err = new Error("Validation error");
+      err.statusCode = 400;
+      err.fieldErrors = formatZodError(result.error).fieldErrors;
+      return next(err);
     }
 
     // ข้อมูลที่ผ่านการ validate แล้ว
-    req.body = result.data;
+    req.validatedBody = result.data;
     next();
   },
   
