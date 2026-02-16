@@ -3,23 +3,31 @@ import PostService from "../service/postService.mjs";
 const PostController = {
   getPostById: async (req, res, next) => {
     try {
-      const post = await PostService.getPostById(req.params.postId);
-
+      console.log("USER:", req.user);
+      const postId = req.params.postId;
+      const userId = req.user?.id || null; // กันกรณี guest
+  
+      const post = await PostService.getPostById(postId, userId);
+  
       if (!post) {
-        const error = new Error("Server could not find a requested post");
-        error.statusCode = 404;
-        throw error;
+        return res.status(404).json({
+          message: "Post not found",
+        });
       }
-
+  
       return res.status(200).json({
         data: {
+          id: post.id,
           image: post.image,
           category_id: post.category_id,
+          category: post.category,
           title: post.title,
           description: post.description,
           content: post.content,
           status_id: post.status_id,
+          status: post.status,
           likes_count: post.likes_count,
+          is_liked: post.is_liked, 
           created_at: post.created_at,
           updated_at: post.updated_at,
         },
@@ -28,26 +36,13 @@ const PostController = {
       return next(error);
     }
   },
+  
 
   createPost: async (req, res, next) => {
     try {
-      const {
-        title,
-        image,
-        category_id,
-        description,
-        content,
-        status_id,
-      } = req.body;
+      const postData = req.validatedBody || req.body;
 
-      await PostService.createPost({
-        title,
-        image,
-        category_id,
-        description,
-        content,
-        status_id,
-      });
+      await PostService.createPost(postData);
 
       return res.status(201).json({
         message: "Create post successfully",
@@ -59,33 +54,19 @@ const PostController = {
 
   getAllPosts: async (req, res, next) => {
     try {
-      const { category, keyword } = req.query;
+      const result = await PostService.getAllPosts(req.query);
 
-      const currentPage = Math.max(parseInt(req.query.page, 10) || 1, 1);
-      const pageLimit = Math.min(
-        Math.max(parseInt(req.query.limit, 10) || 6, 1),
-        20
-      );
-      const offset = (currentPage - 1) * pageLimit;
+      return res.status(200).json(result);
+    } catch (error) {
+      return next(error);
+    }
+  },
 
-      const rows = await PostService.getAllPosts({
-        category,
-        keyword,
-        pageLimit,
-        offset,
-      });
+  getAllPostsForAdmin: async (req, res, next) => {
+    try {
+      const result = await PostService.getAllPostsForAdmin(req.query);
 
-      const totalPosts = rows[0]?.total_posts || 0;
-      const totalPages = Math.ceil(totalPosts / pageLimit);
-
-      return res.status(200).json({
-        totalPosts,
-        totalPages,
-        currentPage,
-        limit: pageLimit,
-        posts: rows,
-        nextPage: currentPage < totalPages ? currentPage + 1 : null,
-      });
+      return res.status(200).json(result);
     } catch (error) {
       return next(error);
     }
@@ -93,33 +74,24 @@ const PostController = {
 
   updatePost: async (req, res, next) => {
     try {
-        await PostService.updatePost(req.params.postId, req.body);
+      const postData = req.validatedBody || req.body;
 
-        res.status(200).json({
-            message: "Updated post successfully",
-        });
+      await PostService.updatePost(req.params.postId, postData);
+
+      return res.status(200).json({
+        message: "Updated post successfully",
+      });
     } catch (error) {
-        next(error);
+      return next(error);
     }
-}
-,
+  },
 
   deletePost: async (req, res, next) => {
     try {
-      const { postId } = req.params;
-
-      const deletedPost = await PostService.deletePost(postId);
-
-      if (!deletedPost) {
-        const error = new Error(
-          "Server could not find a requested post to delete"
-        );
-        error.statusCode = 404;
-        throw error;
-      }
+      await PostService.deletePost(req.params.postId);
 
       return res.status(200).json({
-        message: "Deleted post sucessfully",
+        message: "Deleted post successfully",
       });
     } catch (error) {
       return next(error);
