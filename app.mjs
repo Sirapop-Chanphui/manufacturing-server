@@ -3,6 +3,8 @@ import express from "express";
 import connectionPool from "./utils/db.mjs";
 import corsMiddleware from "./middlewares/corsMiddleware.mjs";
 import postsRouter from "./routes/postRouter.mjs";
+import categoryRouter from "./routes/categoryRouter.mjs";
+import adminRouter from "./routes/adminRouter.mjs";
 import authRouter from "./routes/authRouter.mjs";
 import errorHandler from "./middlewares/errorHandler.mjs";
 
@@ -32,6 +34,8 @@ app.get("/db-test", async (req, res) => {
 
 
 app.use("/posts", postsRouter);
+app.use("/categories", categoryRouter);
+app.use("/admin", adminRouter);
 app.use("/auth", authRouter);
 
 

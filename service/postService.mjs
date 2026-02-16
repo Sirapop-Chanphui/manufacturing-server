@@ -1,44 +1,165 @@
 import PostRepository from "../repositories/postRepository.mjs";
 
+const DEFAULT_POST_USER_LIMIT = 6;
+const MAX_LIMIT = 20;
+
+const DEFAULT_POST_ADMINLIMIT = 20;
+
+
 const PostService = {
-    getPostById: async (postId) => {
-        return await PostRepository.findById(postId);
-    },
-
-    createPost: async (postData) => {
-        return await PostRepository.create(postData);
-    },
-
-    getAllPosts: async (filters) => {
-        return await PostRepository.findAll(filters);
-    },
-
-    updatePost: async (postId, postData) => {
-        const updatedPost = await PostRepository.update(postId, postData);
-    
-        if (!updatedPost) {
-            const err = new Error("Post not found");
-            err.statusCode = 404;
-            throw err;
-        }
-    
-        return updatedPost;
+  getPostById: async (postId, userId) => {
+    const post = await PostRepository.findById(postId, userId);
+    if (!post) {
+      const err = new Error("Server could not find a requested post");
+      err.statusCode = 404;
+      throw err;
     }
-    ,
+  
+    return post;
+  },
+  
 
-    deletePost: async (req, res, next) => {
-        try {
-            await PostService.deletePost(req.params.postId);
-    
-            return res.status(200).json({
-                message: "Deleted post successfully",
-            });
-        } catch (error) {
-            return next(error);
-        }
+  createPost: async (postData) => {
+    const { title, image, category, description, content, status } = postData;
+
+    const category_id = await PostRepository.findCategoryIdByName(category);
+    const status_id = await PostRepository.findStatusIdByName(status);
+
+    if (!category_id) {
+      const err = new Error("Validation error");
+      err.statusCode = 400;
+      err.fieldErrors = { category: "Category not found" };
+      throw err;
     }
-    
-    
-}
 
-export default PostService
+    if (!status_id) {
+      const err = new Error("Validation error");
+      err.statusCode = 400;
+      err.fieldErrors = { status: "Status not found" };
+      throw err;
+    }
+
+    return await PostRepository.create({
+      title,
+      image,
+      category_id,
+      description,
+      content,
+      status_id,
+    });
+  },
+
+  getAllPosts: async (query) => {
+    const { category, keyword } = query;
+    const currentPage = Math.max(parseInt(query.page, 10) || 1, 1);
+    const pageLimit = Math.min(
+      Math.max(parseInt(query.limit, 10) || DEFAULT_POST_USER_LIMIT, 1),
+      MAX_LIMIT
+    );
+    const offset = (currentPage - 1) * pageLimit;
+
+    const rows = await PostRepository.findAll({
+      category,
+      keyword,
+      status: "published",
+      pageLimit,
+      offset,
+    });
+
+    const totalPosts = rows[0]?.total_posts || 0;
+    const totalPages = Math.ceil(totalPosts / pageLimit);
+    const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+
+    return {
+      posts: rows,
+      totalPosts,
+      totalPages,
+      currentPage,
+      limit: pageLimit,
+      nextPage,
+    };
+  },
+
+  getAllPostsForAdmin: async (query) => {
+    const { category, keyword, title, status } = query;
+    const currentPage = Math.max(parseInt(query.page, 10) || 1, 1);
+    const pageLimit = Math.min(
+      Math.max(parseInt(query.limit, 10) || DEFAULT_POST_ADMINLIMIT, 1),
+      MAX_LIMIT
+    );
+    const offset = (currentPage - 1) * pageLimit;
+
+    const rows = await PostRepository.findAll({
+      category,
+      keyword,
+      title,
+      status,
+      pageLimit,
+      offset,
+    });
+
+    const totalPosts = rows[0]?.total_posts || 0;
+    const totalPages = Math.ceil(totalPosts / pageLimit);
+    const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+
+    return {
+      posts: rows,
+      totalPosts,
+      totalPages,
+      currentPage,
+      limit: pageLimit,
+      nextPage,
+    };
+  },
+
+  updatePost: async (postId, postData) => {
+    const { title, image, category, description, content, status } = postData;
+
+    const category_id = await PostRepository.findCategoryIdByName(category);
+    const status_id = await PostRepository.findStatusIdByName(status);
+
+    const fieldErrors = {};
+    if (!category_id) fieldErrors.category = "Category not found";
+    if (!status_id) fieldErrors.status = "Status not found";
+
+    if (Object.keys(fieldErrors).length > 0) {
+      const err = new Error("Validation error");
+      err.statusCode = 400;
+      err.fieldErrors = fieldErrors;
+      throw err;
+    }
+
+    const updatedPost = await PostRepository.update(postId, {
+      title,
+      image,
+      category_id,
+      description,
+      content,
+      status_id,
+    });
+
+    if (!updatedPost) {
+      const err = new Error("Post not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    return updatedPost;
+  },
+
+  deletePost: async (postId) => {
+    const deletedPost = await PostRepository.delete(postId);
+
+    if (!deletedPost) {
+      const err = new Error(
+        "Server could not find a requested post to delete"
+      );
+      err.statusCode = 404;
+      throw err;
+    }
+
+    return deletedPost;
+  },
+};
+
+export default PostService;
