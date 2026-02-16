@@ -1,5 +1,5 @@
 const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
+  const statusCode = Number(err.statusCode) || 500;
 
   // ถ้าเป็น validation style error
   if (err.fieldErrors) {

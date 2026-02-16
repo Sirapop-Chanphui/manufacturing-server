@@ -1,4 +1,5 @@
 import PostRepository from "../repositories/postRepository.mjs";
+import supabase from "../utils/supabaseClient.mjs";
 
 const DEFAULT_POST_USER_LIMIT = 6;
 const MAX_LIMIT = 20;
@@ -14,16 +15,36 @@ const PostService = {
       err.statusCode = 404;
       throw err;
     }
-  
+
     return post;
   },
-  
 
-  createPost: async (postData) => {
-    const { title, image, category, description, content, status } = postData;
 
-    const category_id = await PostRepository.findCategoryIdByName(category);
-    const status_id = await PostRepository.findStatusIdByName(status);
+  createPost: async (postData, file) => {
+    const bucketName = "manufacturing-blog";
+    let imageUrl = null;
+
+    if (file) {
+      const filePath = `posts/${Date.now()}_${file.originalname}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+
+      if (error) throw error;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(bucketName).getPublicUrl(data.path);
+
+      imageUrl = publicUrl;
+    }
+
+    const { title, category_id, description, content, status_id } = postData;
+
 
     if (!category_id) {
       const err = new Error("Validation error");
@@ -41,7 +62,7 @@ const PostService = {
 
     return await PostRepository.create({
       title,
-      image,
+      image: imageUrl,
       category_id,
       description,
       content,
@@ -112,40 +133,60 @@ const PostService = {
     };
   },
 
-  updatePost: async (postId, postData) => {
-    const { title, image, category, description, content, status } = postData;
-
-    const category_id = await PostRepository.findCategoryIdByName(category);
-    const status_id = await PostRepository.findStatusIdByName(status);
-
+  updatePost: async (postId, postData, file) => {
+    const bucketName = "manufacturing-blog";
+  
+    const { title, category_id, description, content, status_id } = postData;
+  
     const fieldErrors = {};
     if (!category_id) fieldErrors.category = "Category not found";
     if (!status_id) fieldErrors.status = "Status not found";
-
+  
     if (Object.keys(fieldErrors).length > 0) {
       const err = new Error("Validation error");
       err.statusCode = 400;
       err.fieldErrors = fieldErrors;
       throw err;
     }
-
-    const updatedPost = await PostRepository.update(postId, {
+  
+    let updateData = {
       title,
-      image,
       category_id,
       description,
       content,
       status_id,
-    });
-
+    };
+  
+    if (file) {
+      const filePath = `posts/${Date.now()}_${file.originalname}`;
+  
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+  
+      if (error) throw error;
+  
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(bucketName).getPublicUrl(data.path);
+  
+      updateData.image = publicUrl;
+    }
+  
+    const updatedPost = await PostRepository.update(postId, updateData);
+  
     if (!updatedPost) {
       const err = new Error("Post not found");
       err.statusCode = 404;
       throw err;
     }
-
+  
     return updatedPost;
   },
+  
 
   deletePost: async (postId) => {
     const deletedPost = await PostRepository.delete(postId);

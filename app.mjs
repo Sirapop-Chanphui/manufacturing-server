@@ -39,7 +39,6 @@ app.use("/admin", adminRouter);
 app.use("/auth", authRouter);
 
 
-
 // Global error handler (must be after all routes)
 app.use(errorHandler);
 

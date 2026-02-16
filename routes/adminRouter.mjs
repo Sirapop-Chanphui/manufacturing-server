@@ -6,6 +6,7 @@ import PostsValidation from "../middlewares/postsValidation.mjs";
 import CategoryValidation from "../middlewares/categoryValidation.mjs";
 import StatusValidation from "../middlewares/statusValidation.mjs";
 import protectMiddleware from "../middlewares/protectMiddleware.mjs";
+import { imageFileUpload } from "../middlewares/uploadMiddleware.mjs";
 import { restrictTo } from "../middlewares/roleMiddleware.mjs";
 
 const adminRouter = Router();
@@ -42,6 +43,7 @@ adminRouter.get("/posts", PostController.getAllPostsForAdmin);
 // Create post
 adminRouter.post(
   "/posts",
+  imageFileUpload,
   PostsValidation.validatePost,
   PostController.createPost
 );
@@ -49,7 +51,8 @@ adminRouter.post(
 // Update post
 adminRouter.put(
   "/posts/:postId",
-  PostsValidation.validatePost,
+  imageFileUpload,
+  PostsValidation.validateUpdatePost,
   PostController.updatePost
 );
 
