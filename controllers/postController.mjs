@@ -6,15 +6,15 @@ const PostController = {
       console.log("USER:", req.user);
       const postId = req.params.postId;
       const userId = req.user?.id || null; // กันกรณี guest
-  
+
       const post = await PostService.getPostById(postId, userId);
-  
+
       if (!post) {
         return res.status(404).json({
           message: "Post not found",
         });
       }
-  
+
       return res.status(200).json({
         data: {
           id: post.id,
@@ -27,7 +27,7 @@ const PostController = {
           status_id: post.status_id,
           status: post.status,
           likes_count: post.likes_count,
-          is_liked: post.is_liked, 
+          is_liked: post.is_liked,
           created_at: post.created_at,
           updated_at: post.updated_at,
         },
@@ -36,13 +36,14 @@ const PostController = {
       return next(error);
     }
   },
-  
+
 
   createPost: async (req, res, next) => {
     try {
       const postData = req.validatedBody || req.body;
+      const file = req.files.imageFile[0];
 
-      await PostService.createPost(postData);
+      await PostService.createPost(postData, file);
 
       return res.status(201).json({
         message: "Create post successfully",
@@ -76,12 +77,15 @@ const PostController = {
     try {
       const postData = req.validatedBody || req.body;
 
-      await PostService.updatePost(req.params.postId, postData);
+      const file = req.files?.imageFile?.[0] || null;
+
+      await PostService.updatePost(req.params.postId, postData, file);
 
       return res.status(200).json({
         message: "Updated post successfully",
       });
     } catch (error) {
+      console.error("UPDATE ERROR:", error);
       return next(error);
     }
   },

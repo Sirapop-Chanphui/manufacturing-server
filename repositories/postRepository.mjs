@@ -125,25 +125,30 @@ const PostRepository = {
         return result.rows;
     },
 
-    update: async (postId, postData) => {
-        const { title, image, category_id, description, content, status_id } = postData;
-        const result = await connectionPool.query(
-            `
-            UPDATE posts
-            SET
-                title = $1,
-                image = $2,
-                category_id = $3,
-                description = $4,
-                content = $5,
-                status_id = $6
-            WHERE id = $7
-            RETURNING *
-            `,
-            [title, image, category_id, description, content, status_id, postId]
-        );
+    update: async (id, updateData) => {
+        const fields = [];
+        const values = [];
+        let index = 1;
+      
+        for (const key in updateData) {
+          fields.push(`${key} = $${index}`);
+          values.push(updateData[key]);
+          index++;
+        }
+      
+        const query = `
+          UPDATE posts
+          SET ${fields.join(", ")}
+          WHERE id = $${index}
+          RETURNING *
+        `;
+      
+        values.push(id);
+      
+        const result = await connectionPool.query(query, values);
         return result.rows[0] || null;
-    },
+      },
+      
 
     delete: async (postId) => {
         const result = await connectionPool.query(
