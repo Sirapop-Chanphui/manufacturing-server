@@ -30,6 +30,14 @@ postsRouter.post(
   LikeController.toggleLike
 );
 
+// Like button state: optional auth (guest → isLiked always false)
+postsRouter.get(
+  "/:postId/like-status",
+  authOptional,
+  LikeValidation.validatePostIdParam,
+  LikeController.getLikeStatus
+);
+
 // Single post (public); optional ?include=comments merges paginated comments into the response
 postsRouter.get("/:postId", authOptional, PostController.getPostById);
 

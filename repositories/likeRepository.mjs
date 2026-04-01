@@ -2,6 +2,39 @@ import connectionPool from "../utils/db.mjs";
 
 const LikeRepository = {
   /**
+   * Whether the post exists and if `userId` has liked it (false when userId is null / guest).
+   * @returns {{ isLiked: boolean } | null} null if post does not exist
+   */
+  getLikeStatus: async (postId, userId) => {
+    if (userId == null) {
+      const postOnly = await connectionPool.query(
+        `SELECT id FROM posts WHERE id = $1`,
+        [postId]
+      );
+      if (postOnly.rowCount === 0) {
+        return null;
+      }
+      return { isLiked: false };
+    }
+// ห้ระบุชนิดของพารามิเตอร์ $2 ชัดเจน — PostgreSQL ไม่สามารถอนุมานชนิดของ NULL ได้เมื่อใช้ร่วมกับ user_id = $2 (uuid)
+    const result = await connectionPool.query(
+      `SELECT EXISTS (
+         SELECT 1 FROM likes l
+         WHERE l.post_id = $1 AND l.user_id = $2::uuid
+       ) AS is_liked
+       FROM posts
+       WHERE posts.id = $1`,
+      [postId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return null;
+    }
+
+    return { isLiked: result.rows[0].is_liked };
+  },
+
+  /**
    * Toggles like for a post in one transaction: insert+increment or delete+decrement.
    * @returns {{ isLiked: boolean, likes_count: number } | null} null if post does not exist
    */
