@@ -1,9 +1,11 @@
 import { Router } from "express";
 import PostController from "../controllers/postController.mjs";
 import CommentController from "../controllers/commentController.mjs";
+import LikeController from "../controllers/likeController.mjs";
 import authOptional from "../middlewares/authOptional.mjs";
 import protectMiddleware from "../middlewares/protectMiddleware.mjs";
 import { restrictTo } from "../middlewares/roleMiddleware.mjs";
+import LikeValidation from "../middlewares/likeValidation.mjs";
 
 const postsRouter = Router();
 
@@ -17,6 +19,15 @@ postsRouter.post(
   protectMiddleware,
   restrictTo("user", "admin"),
   CommentController.createComment
+);
+
+// Toggle like (authenticated user or admin)
+postsRouter.post(
+  "/:postId/like",
+  protectMiddleware,
+  restrictTo("user", "admin"),
+  LikeValidation.validatePostIdParam,
+  LikeController.toggleLike
 );
 
 // Single post (public); optional ?include=comments merges paginated comments into the response
