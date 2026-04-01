@@ -7,7 +7,6 @@ import categoryRouter from "./routes/categoryRouter.mjs";
 import adminRouter from "./routes/adminRouter.mjs";
 import authRouter from "./routes/authRouter.mjs";
 import errorHandler from "./middlewares/errorHandler.mjs";
-
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -32,12 +31,11 @@ app.get("/db-test", async (req, res) => {
     }
 });
 
+app.use("/auth", authRouter);
+app.use("/admin", adminRouter);
 
 app.use("/posts", postsRouter);
 app.use("/categories", categoryRouter);
-app.use("/admin", adminRouter);
-app.use("/auth", authRouter);
-
 
 // Global error handler (must be after all routes)
 app.use(errorHandler);

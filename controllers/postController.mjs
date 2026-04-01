@@ -1,9 +1,9 @@
 import PostService from "../service/postService.mjs";
+import CommentService from "../service/commentService.mjs";
 
 const PostController = {
   getPostById: async (req, res, next) => {
     try {
-      console.log("USER:", req.user);
       const postId = req.params.postId;
       const userId = req.user?.id || null; // กันกรณี guest
 
@@ -15,23 +15,31 @@ const PostController = {
         });
       }
 
-      return res.status(200).json({
-        data: {
-          id: post.id,
-          image: post.image,
-          category_id: post.category_id,
-          category: post.category,
-          title: post.title,
-          description: post.description,
-          content: post.content,
-          status_id: post.status_id,
-          status: post.status,
-          likes_count: post.likes_count,
-          is_liked: post.is_liked,
-          created_at: post.created_at,
-          updated_at: post.updated_at,
-        },
-      });
+      const data = {
+        id: post.id,
+        image: post.image,
+        category_id: post.category_id,
+        category: post.category,
+        title: post.title,
+        description: post.description,
+        content: post.content,
+        status_id: post.status_id,
+        status: post.status,
+        likes_count: post.likes_count,
+        is_liked: post.is_liked,
+        created_at: post.created_at,
+        updated_at: post.updated_at,
+      };
+
+      if (req.query.include === "comments") {
+        const commentsPayload = await CommentService.getCommentsByPost(
+          Number(postId),
+          req.query
+        );
+        data.comments = commentsPayload;
+      }
+
+      return res.status(200).json({ data });
     } catch (error) {
       return next(error);
     }
