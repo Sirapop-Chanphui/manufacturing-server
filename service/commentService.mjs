@@ -1,5 +1,8 @@
 import CommentRepository from "../repositories/commentRepository.mjs";
 
+const DEFAULT_COMMENT_LIMIT = 5;
+const MAX_COMMENT_LIMIT = 50;
+
 const CommentService = {
 
   createComment: async ({ postId, userId, comment_text }) => {
@@ -19,13 +22,24 @@ const CommentService = {
 
   getCommentsByPost: async (postId, query) => {
     const currentPage = Math.max(parseInt(query.page, 10) || 1, 1);
-    const commentLimit = 3;
+    const parsedLimit = parseInt(query?.limit, 10);
+    const commentLimit = Math.min(
+      Math.max(
+        Number.isFinite(parsedLimit) && parsedLimit > 0
+          ? parsedLimit
+          : DEFAULT_COMMENT_LIMIT,
+        1
+      ),
+      MAX_COMMENT_LIMIT
+    );
     const offset = (currentPage - 1) * commentLimit;
     const rows = await CommentRepository.findByPostId(postId, commentLimit, offset);
 
     const totalComments = rows[0]?.total_comments || 0;
-    const totalPages = Math.ceil(totalComments / commentLimit);
-    const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+    const totalPages =
+      totalComments === 0 ? 0 : Math.ceil(totalComments / commentLimit);
+    const nextPage =
+      totalPages > 0 && currentPage < totalPages ? currentPage + 1 : null;
 
     return {
       comments: rows,
@@ -35,8 +49,7 @@ const CommentService = {
       limit: commentLimit,
       nextPage,
     };
-
-  }
+  },
 
 };
 
