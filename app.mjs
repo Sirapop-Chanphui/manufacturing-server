@@ -2,24 +2,26 @@ import 'dotenv/config'
 import express from "express";
 import connectionPool from "./utils/db.mjs";
 import corsMiddleware from "./middlewares/corsMiddleware.mjs";
-import postsRouter from "./routes/postRouter.mjs";
-import categoryRouter from "./routes/categoryRouter.mjs";
-import adminRouter from "./routes/adminRouter.mjs";
-import authRouter from "./routes/authRouter.mjs";
-import userRouter from './routes/userRouter.mjs';
-import errorHandler from "./middlewares/errorHandler.mjs";
+import postsRouter from './routes/postRouter.mjs';
+import cors from "cors";
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(express.json());
-
-app.use(corsMiddleware);
+app.use(express.json())
+app.use(cors());
 
 
 app.get("/", (req, res) => {
-    res.send("server is running...");
+    res.send("Hello TechUp!");
 });
+
+app.get("/health", (req, res) => {
+    res.json({ message: "OK" });
+});
+
+app.use("/posts", postsRouter);
 
 app.get("/db-test", async (req, res) => {
     try {
@@ -33,15 +35,19 @@ app.get("/db-test", async (req, res) => {
     }
 });
 
-app.use("/auth", authRouter);
-app.use("/user", userRouter);
-app.use("/admin", adminRouter);
 
-app.use("/posts", postsRouter);
-app.use("/categories", categoryRouter);
 
-// Global error handler (must be after all routes)
-app.use(errorHandler);
+
+app.get("/profiles", (req, res) => {
+    res.status(200).json({
+        "data": {
+            "name": "john",
+            "age": 20
+        }
+    });
+});
+
+
 
 if (process.env.VERCEL !== "1") {
   app.listen(PORT, () => {
