@@ -33,7 +33,7 @@ const AuthRepository = {
   findById: async (id) => {
     const result = await connectionPool.query(
       `
-      SELECT id, email, username, name, role, password, created_at
+      SELECT id, email, username, name, role, created_at
       FROM users
       WHERE id = $1
       `,

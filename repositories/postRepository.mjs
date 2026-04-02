@@ -50,7 +50,14 @@ const PostRepository = {
     
         return result.rows[0] || null;
     },
-    
+
+    findImageById: async (postId) => {
+        const result = await connectionPool.query(
+            `SELECT image FROM posts WHERE id = $1`,
+            [postId]
+        );
+        return result.rows[0]?.image ?? null;
+    },
 
     create: async (postData) => {
         const { title, image, category_id, description, content, status_id } = postData;

@@ -6,7 +6,9 @@ import postsRouter from "./routes/postRouter.mjs";
 import categoryRouter from "./routes/categoryRouter.mjs";
 import adminRouter from "./routes/adminRouter.mjs";
 import authRouter from "./routes/authRouter.mjs";
+import userRouter from './routes/userRouter.mjs';
 import errorHandler from "./middlewares/errorHandler.mjs";
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -32,6 +34,7 @@ app.get("/db-test", async (req, res) => {
 });
 
 app.use("/auth", authRouter);
+app.use("/user", userRouter);
 app.use("/admin", adminRouter);
 
 app.use("/posts", postsRouter);

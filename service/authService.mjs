@@ -75,9 +75,7 @@ const AuthService = {
       throw err;
     }
 
-    const { password: _password, ...userWithoutPassword } = user;
-
-    return userWithoutPassword;
+    return user;
   },
 };
 
